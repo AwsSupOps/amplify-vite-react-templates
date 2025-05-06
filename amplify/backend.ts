@@ -6,3 +6,7 @@ defineBackend({
   auth,
   data,
 });
+
+const { cfnUserPool } = backend.auth.resources.cfnResources;
+cfnUserPool.usernameAttributes = [];
+cfnUserPool.aliasAttributes = ["email", "preferred_username"];
