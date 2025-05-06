@@ -1,59 +1,45 @@
-// 
+import { useEffect, useState } from "react";
+import type { Schema } from "../amplify/data/resource";
+import { useAuthenticator } from '@aws-amplify/ui-react';
+import { generateClient } from "aws-amplify/data";
 
+const client = generateClient<Schema>();
 
+function App() {
+  const { signOut } = useAuthenticator();
+  
+  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
 
+  useEffect(() => {
+    client.models.Todo.observeQuery().subscribe({
+      next: (data) => setTodos([...data.items]),
+    });
+  }, []);
 
-import { FormEvent } from "react"
-import { signUp } from "@aws-amplify/auth"
-
-interface SignUpFormElements extends HTMLFormControlsCollection {
-  email: HTMLInputElement
-  password: HTMLInputElement
-  preferredUsername: HTMLInputElement
-}
-
-interface SignUpForm extends HTMLFormElement {
-  readonly elements: SignUpFormElements
-}
-
-export default function App() {
-  async function handleSubmit(event: FormEvent<SignUpForm>) {
-    event.preventDefault()
-    const form = event.currentTarget
-    const email = form.elements.email.value
-    const password = form.elements.password.value
-    const preferredUsername = form.elements.preferredUsername.value
-
-    // Basic validation
-    if (!email || !password || !preferredUsername) {
-      alert("Email, password, and preferred username are required.")
-      return
-    }
-
-    try {
-      const user = await signUp({
-        username: email,
-        password,
-        attributes: {
-          preferredUsername,
-        },
-      })
-      console.log("User signed up successfully:", user)
-    } catch (error) {
-      console.error("Signup error:", error)
-      alert(`Signup failed: ${error.message}`)
-    }
+  function createTodo() {
+    client.models.Todo.create({ content: window.prompt("Todo content") });
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label htmlFor="email">Email:</label>
-      <input type="email" id="email" name="email" required />
-      <label htmlFor="password">Password:</label>
-      <input type="password" id="password" name="password" required />
-      <label htmlFor="preferredUsername">Preferred Username:</label>
-      <input type="text" id="preferredUsername" name="preferredUsername" required />
-      <input type="submit" value="Sign Up" />
-    </form>
-  )
+    <main>
+      <h1>My todos</h1>
+      <button onClick={createTodo}>+ new</button>
+      <ul>
+        {todos.map((todo) => (
+          <li key={todo.id}>{todo.content}</li>
+        ))}
+      </ul>
+      <div>
+        🥳 App successfully hosted. Try creating a new todo.
+        <br />
+        <a href="https://docs.amplify.aws/react/start/quickstart/#make-frontend-updates">
+          Review next step of this tutorial.
+        </a>
+      </div>
+      
+            <button onClick={signOut}>Sign out</button>
+    </main>
+  );
 }
+
+export default App;
